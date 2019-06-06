@@ -107,6 +107,11 @@ class MyGame(arcade.Window):
         self.paused = False
         self.board_sprite_list = None
 
+        self.laser_sound = arcade.load_sound('final-project-spring-2019-sean-jiang/music.wav')
+
+
+
+
     def new_stone(self):
         """
         Randomly grab a new stone and set the stone location to the top.
@@ -210,6 +215,11 @@ class MyGame(arcade.Window):
             self.rotate_stone()
         elif key == arcade.key.DOWN:
             self.drop()
+
+        if key == arcade.key.SPACE:
+                arcade.play_sound(self.laser_sound)
+
+
 
     def draw_grid(self, grid, offset_x, offset_y):
         """
