@@ -107,7 +107,7 @@ class MyGame(arcade.Window):
         self.paused = False
         self.board_sprite_list = None
 
-        self.laser_sound = arcade.load_sound('final-project-spring-2019-sean-jiang/music.wav')
+        self.laser_sound = arcade.load_sound('/Users/haoxiangjiang/PycharmProjects/final-project-spring-2019-sean-jiang/music.wav')
 
 
 
@@ -216,8 +216,8 @@ class MyGame(arcade.Window):
         elif key == arcade.key.DOWN:
             self.drop()
 
-        if key == arcade.key.SPACE:
-                arcade.play_sound(self.laser_sound)
+        elif key == arcade.key.SPACE:
+            arcade.play_sound(self.laser_sound)
 
 
 
@@ -265,9 +265,13 @@ def main():
     """ Create the game window, setup, run """
     my_game = MyGame(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
     my_game.setup()
+    print("Playing music.")
+    music = arcade.sound.load_sound("music.wav")
+    arcade.sound.play_sound(music)
     arcade.run()
 
 
 if __name__ == "__main__":
     main()
+
 
