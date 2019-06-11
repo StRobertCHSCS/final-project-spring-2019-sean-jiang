@@ -1,6 +1,6 @@
-# Name: Sean
-# Game: Sean's Tetris 2019
-# Version: 2
+# Name: Sean Jiang
+# File: Sean's Tetris 2019
+# Version: 3
 
 import arcade
 import random
@@ -8,6 +8,7 @@ import os
 import PIL
 import random
 import time
+import multiprocessing
 
 ''' Objectives in this version
 Step 1: Build a window that can select difficulty.
@@ -19,8 +20,8 @@ Step 5: Fixing the bugs in Version 1. [Done]
 '''
 
 # Set how many rows and columns we will have
-ROW_COUNT = 16
-COLUMN_COUNT = 5
+ROW_COUNT = 23
+COLUMN_COUNT = 10
 
 # This sets the WIDTH and HEIGHT of each grid location
 WIDTH = 30
@@ -28,6 +29,7 @@ HEIGHT = 30
 
 # Each cell's margin size.
 MARGIN = 1
+SELECTED_DIFFICULTY = 0
 
 # Determine if the game can be started after selecting game difficulty.
 START_GAME = False
@@ -37,8 +39,8 @@ SCREEN_WIDTH = (WIDTH + MARGIN) * COLUMN_COUNT + MARGIN
 SCREEN_HEIGHT = (HEIGHT + MARGIN) * ROW_COUNT + MARGIN
 SCREEN_TITLE = "Sean's Tetris 2019"
 
-colors = [(220, 220, 220), (0, 0, 0), (0, 150, 0), (220, 20, 60), (255, 69, 0),
-          (143, 188, 143), (210, 105, 30), (255, 0, 255), (255, 255, 0),
+colors = [(220, 220, 220), (255, 128, 170), (0, 150, 0), (220, 20, 60), (255, 69, 0),
+          (231, 144, 143), (210, 105, 30), (255, 0, 255), (0, 230, 230),
           (255, 218, 185), (75, 0, 130), (219, 112, 147), (188, 143, 143)]
 
 # Define the shapes of the single parts
@@ -51,6 +53,7 @@ tetris_shapes = [
     [[6, 6, 6, 6]],
     [[7, 7], [7, 7]]
 ]
+
 
 
 def create_textures():
@@ -85,9 +88,15 @@ def check_collision(board, shape, offset):
 
 
 def remove_row(board, row):
-    """ Remove a row from the board, add a blank row on top. """
+    """ Removing a row from the game board. """
     del board[row]
-    return [[0 for i in range(COLUMN_COUNT)]] + board
+
+    new_zero_list = []
+
+    for i in range(0, COLUMN_COUNT):
+        new_zero_list.append(0)
+
+    return [new_zero_list] + board
 
 
 def join_matrixes(matrix_1, matrix_2, matrix_2_offset):
@@ -279,6 +288,7 @@ class SeanTetris(arcade.Window):
         self.draw_grid(self.stone, self.stone_x, self.stone_y)
 
 
+
 class TextButton:
     """ Text-based button """
     def __init__(self,
@@ -357,9 +367,31 @@ class TextButton:
         self.pressed = False
 
 
-class StartTextButton(TextButton):
+def check_mouse_press_for_buttons(x, y, button_list):
+    """ Given an x, y, see if we need to register any button clicks. """
+    for button in button_list:
+        if x > button.center_x + button.width / 2:
+            continue
+        if x < button.center_x - button.width / 2:
+            continue
+        if y > button.center_y + button.height / 2:
+            continue
+        if y < button.center_y - button.height / 2:
+            continue
+        button.on_press()
+
+
+def check_mouse_release_for_buttons(x, y, button_list):
+    """ If a mouse button has been released, see if we need to process
+        any release events. """
+    for button in button_list:
+        if button.pressed:
+            button.on_release()
+
+
+class Difficulty_Easy(TextButton):
     def __init__(self, center_x, center_y, action_function):
-        super().__init__(center_x, center_y, 100, 40, "Start", 18, "Arial")
+        super().__init__(center_x, center_y, 100, 40, "Easy", 18, "Arial")
         self.action_function = action_function
 
     def on_release(self):
@@ -367,9 +399,18 @@ class StartTextButton(TextButton):
         self.action_function()
 
 
-class StopTextButton(TextButton):
+class Difficulty_Mediocre(TextButton):
     def __init__(self, center_x, center_y, action_function):
-        super().__init__(center_x, center_y, 100, 40, "Stop", 18, "Arial")
+        super().__init__(center_x, center_y, 100, 40, "Mediocre", 18, "Arial")
+        self.action_function = action_function
+
+    def on_release(self):
+        super().on_release()
+        self.action_function()
+
+class Difficulty_Hard(TextButton):
+    def __init__(self, center_x, center_y, action_function):
+        super().__init__(center_x, center_y, 100, 40, "Hard", 18, "Arial")
         self.action_function = action_function
 
     def on_release(self):
@@ -378,30 +419,129 @@ class StopTextButton(TextButton):
 
 
 class DifficultyMenu(arcade.Window):
-    """ Main application class. """
+    """
+    Main application class.
+
+    NOTE: Go ahead and delete the methods you don't need.
+    If you do need a method, delete the 'pass' and replace it
+    with your own code. Don't leave 'pass' in this program.
+    """
 
     def __init__(self, width, height, title):
-        """ Set up the application. """
-
         super().__init__(width, height, title)
 
-        arcade.set_background_color(arcade.color.WHITE)
+        arcade.set_background_color(arcade.color.AMAZON)
 
-        self.board = None
-        self.frame_count = 0
-        self.game_over = False
-        self.paused = False
-        self.board_sprite_list = None
+        # If you have sprite lists, you should create them here,
+        # and set them to None
+        self.pause = False
+        self.button_list = []
+
+    def pause_program(self):
+        self.pause = True
+
+    def resume_program(self):
+        self.pause = False
+
+    def choose_difficulty_easy(self):
+        global COLUMN_COUNT, SELECTED_DIFFICULTY
+        COLUMN_COUNT = 10
+        SELECTED_DIFFICULTY = 1
+
+        my_game = SeanTetris(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
+        my_game.setup()
+
+    def choose_difficulty_mediocre(self):
+        global COLUMN_COUNT, SELECTED_DIFFICULTY
+        COLUMN_COUNT = 10
+        SELECTED_DIFFICULTY = 2
+
+        my_game = SeanTetris(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
+        my_game.setup()
+
+    def choose_difficulty_hard(self):
+        global COLUMN_COUNT, SELECTED_DIFFICULTY
+        COLUMN_COUNT = 5
+        SELECTED_DIFFICULTY = 3
+
+        my_game = SeanTetris(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
+        my_game.setup()
 
     def setup(self):
-        #time.sleep(5)
+        # Create your sprites and sprite lists here
+
+        button_difficulty_easy = Difficulty_Easy(100, 200, self.choose_difficulty_easy)
+        self.button_list.append(button_difficulty_easy)
+
+        button_difficulty_mediocre = Difficulty_Mediocre(220, 200, self.choose_difficulty_mediocre)
+        self.button_list.append(button_difficulty_mediocre)
+
+        button_difficulty_hard = Difficulty_Hard(340, 200, self.choose_difficulty_hard)
+        self.button_list.append(button_difficulty_hard)
+
+
+    def on_draw(self):
+        """
+        Render the screen.
+        """
+
+        # This command should happen before we start drawing. It will clear
+        # the screen to the background color, and erase what we drew last frame.
+        arcade.start_render()
+
+        # Call draw() on all your sprite lists below
+        for button in self.button_list:
+            button.draw()
+
+    def update(self, delta_time):
+        """
+        All the logic to move, and the game logic goes here.
+        Normally, you'll call update() on the sprite lists that
+        need it.
+        """
         pass
+
+    def on_key_press(self, key, key_modifiers):
+        """
+        Called whenever a key on the keyboard is pressed.
+
+        For a full list of keys, see:
+        http://arcade.academy/arcade.key.html
+        """
+        pass
+
+    def on_key_release(self, key, key_modifiers):
+        """
+        Called whenever the user lets off a previously pressed key.
+        """
+        pass
+
+    def on_mouse_motion(self, x, y, delta_x, delta_y):
+        """
+        Called whenever the mouse moves.
+        """
+        pass
+
+    def on_mouse_press(self, x, y, button, key_modifiers):
+        """
+        Called when the user presses a mouse button.
+        """
+        check_mouse_press_for_buttons(x, y, self.button_list)
+
+    def on_mouse_release(self, x, y, button, key_modifiers):
+        """
+        Called when a user releases a mouse button.
+        """
+        check_mouse_release_for_buttons(x, y, self.button_list)
+
+
 
 texture_list = create_textures()
 
+
 def main():
-    my_difficulty_menu = DifficultyMenu(256, 256, "Select Difficulty")
-    my_difficulty_menu.setup()
+    #my_difficulty_menu = DifficultyMenu(500, 400, "Select Difficulty")
+    #my_difficulty_menu.setup()
 
     my_game = SeanTetris(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
     my_game.setup()

@@ -12,6 +12,7 @@ SCREEN_HEIGHT = 400
 SCREEN_TITLE = "Difficulty Menu"
 
 
+
 class TextButton:
     """ Text-based button """
     def __init__(self,
@@ -153,7 +154,7 @@ class DifficultyMenu(arcade.Window):
     def __init__(self, width, height, title):
         super().__init__(width, height, title)
 
-        arcade.set_background_color(arcade.color.AMAZON)
+        arcade.set_background_color(arcade.color.ALLOY_ORANGE)
 
         # If you have sprite lists, you should create them here,
         # and set them to None
@@ -251,6 +252,10 @@ class DifficultyMenu(arcade.Window):
         Called when a user releases a mouse button.
         """
         check_mouse_release_for_buttons(x, y, self.button_list)
+
+
+
+
 
 def main():
     """ Main method """
