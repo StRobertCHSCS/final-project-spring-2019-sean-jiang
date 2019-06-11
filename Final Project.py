@@ -1,9 +1,22 @@
 # Name: Sean
 # Game: Sean's Tetris 2019
+# Version: 2
 
 import arcade
+import random
+import os
 import PIL
 import random
+import time
+
+''' Objectives in this version
+Step 1: Build a window that can select difficulty.
+Step 2: Insert audio file. [Done]
+Step 3: Change teal colour to darker colour. [Done]
+Step 4: More colour options. [Done]
+Step 5: Fixing the bugs in Version 1. [Done]
+
+'''
 
 # Set how many rows and columns we will have
 ROW_COUNT = 16
@@ -16,13 +29,17 @@ HEIGHT = 30
 # Each cell's margin size.
 MARGIN = 1
 
+# Determine if the game can be started after selecting game difficulty.
+START_GAME = False
+
 # Do the math to figure out our screen dimensions
 SCREEN_WIDTH = (WIDTH + MARGIN) * COLUMN_COUNT + MARGIN
 SCREEN_HEIGHT = (HEIGHT + MARGIN) * ROW_COUNT + MARGIN
 SCREEN_TITLE = "Sean's Tetris 2019"
 
-colors = [(220, 220, 220), (0, 0, 0), (0, 150, 0), (0, 0, 255), (255, 120, 0),
-          (255, 255, 0), (180, 0, 255), (0, 220, 220)]
+colors = [(220, 220, 220), (0, 0, 0), (0, 150, 0), (220, 20, 60), (255, 69, 0),
+          (143, 188, 143), (210, 105, 30), (255, 0, 255), (255, 255, 0),
+          (255, 218, 185), (75, 0, 130), (219, 112, 147), (188, 143, 143)]
 
 # Define the shapes of the single parts
 tetris_shapes = [
@@ -42,6 +59,7 @@ def create_textures():
 
     for color in colors:
         image = PIL.Image.new('RGB', (WIDTH, HEIGHT), color)
+        print(image)
         texture_list.append(arcade.Texture(str(color), image=image))
 
     return texture_list
@@ -51,6 +69,7 @@ def rotate_clockwise(shape):
     """ Rotates a matrix clockwise """
     return [[shape[y][x] for y in range(len(shape))] for x in
             range(len(shape[0]) - 1, -1, -1)]
+
 
 def check_collision(board, shape, offset):
     """
@@ -82,20 +101,30 @@ def join_matrixes(matrix_1, matrix_2, matrix_2_offset):
 
 
 def new_board():
-    """ Create a grid of 0's. Add 1's to the bottom for easier collision detection. """
-    # Create the main board of 0's
-    board = [[0 for x in range(COLUMN_COUNT)] for y in range(ROW_COUNT)]
-    # Add a bottom border of 1's
-    board += [[1 for x in range(COLUMN_COUNT)]]
+    """ Creating the board. If the cell is 0, then it is unoccupied. If it is 1,
+    then it is occupied. """
 
-    return board
+    game_board = []
+
+    for i in range(0, ROW_COUNT):
+        each_row = []
+        for j in range(0, COLUMN_COUNT):
+            each_row.append(0)
+
+        game_board.append(each_row)
+
+    last_row = []
+    for i in range(0, COLUMN_COUNT):
+        last_row.append(1)
+
+    game_board.append(last_row)
+
+    return game_board
 
 
-class MyGame(arcade.Window):
-    """ Main application class. """
+class SeanTetris(arcade.Window):
 
     def __init__(self, width, height, title):
-        """ Set up the application. """
 
         super().__init__(width, height, title)
 
@@ -106,11 +135,6 @@ class MyGame(arcade.Window):
         self.game_over = False
         self.paused = False
         self.board_sprite_list = None
-
-        self.laser_sound = arcade.load_sound('/Users/haoxiangjiang/PycharmProjects/final-project-spring-2019-sean-jiang/music.wav')
-
-
-
 
     def new_stone(self):
         """
@@ -132,8 +156,8 @@ class MyGame(arcade.Window):
         self.board_sprite_list = arcade.SpriteList()
 
         # Fill up the board with cells.
-        for row in range(len(self.board)):
-            for column in range(len(self.board[0])):
+        for row in range(0, len(self.board)):
+            for column in range(0, len(self.board[0])):
                 sprite = arcade.Sprite()
 
                 # Add the texture of cell to sprite.
@@ -183,8 +207,9 @@ class MyGame(arcade.Window):
                 self.stone = new_stone
 
     def update(self, dt):
-        """ Update, drop stone if warrented """
-        self.frame_count += 1
+        """ Update, drop stone if warranted """
+        self.frame_count = self.frame_count + 1
+
         if self.frame_count % 10 == 0:
             self.drop()
 
@@ -215,11 +240,6 @@ class MyGame(arcade.Window):
             self.rotate_stone()
         elif key == arcade.key.DOWN:
             self.drop()
-
-        elif key == arcade.key.SPACE:
-            arcade.play_sound(self.laser_sound)
-
-
 
     def draw_grid(self, grid, offset_x, offset_y):
         """
@@ -259,19 +279,140 @@ class MyGame(arcade.Window):
         self.draw_grid(self.stone, self.stone_x, self.stone_y)
 
 
+class TextButton:
+    """ Text-based button """
+    def __init__(self,
+                 center_x, center_y,
+                 width, height,
+                 text,
+                 font_size=18,
+                 font_face="Arial",
+                 face_color=arcade.color.LIGHT_GRAY,
+                 highlight_color=arcade.color.WHITE,
+                 shadow_color=arcade.color.GRAY,
+                 button_height=2):
+        self.center_x = center_x
+        self.center_y = center_y
+        self.width = width
+        self.height = height
+        self.text = text
+        self.font_size = font_size
+        self.font_face = font_face
+        self.pressed = False
+        self.face_color = face_color
+        self.highlight_color = highlight_color
+        self.shadow_color = shadow_color
+        self.button_height = button_height
+
+    def draw(self):
+        """ Draw the button """
+        arcade.draw_rectangle_filled(self.center_x, self.center_y, self.width,
+                                     self.height, self.face_color)
+
+        if not self.pressed:
+            color = self.shadow_color
+        else:
+            color = self.highlight_color
+
+        # Bottom horizontal
+        arcade.draw_line(self.center_x - self.width / 2, self.center_y - self.height / 2,
+                         self.center_x + self.width / 2, self.center_y - self.height / 2,
+                         color, self.button_height)
+
+        # Right vertical
+        arcade.draw_line(self.center_x + self.width / 2, self.center_y - self.height / 2,
+                         self.center_x + self.width / 2, self.center_y + self.height / 2,
+                         color, self.button_height)
+
+        if not self.pressed:
+            color = self.highlight_color
+        else:
+            color = self.shadow_color
+
+        # Top horizontal
+        arcade.draw_line(self.center_x - self.width / 2, self.center_y + self.height / 2,
+                         self.center_x + self.width / 2, self.center_y + self.height / 2,
+                         color, self.button_height)
+
+        # Left vertical
+        arcade.draw_line(self.center_x - self.width / 2, self.center_y - self.height / 2,
+                         self.center_x - self.width / 2, self.center_y + self.height / 2,
+                         color, self.button_height)
+
+        x = self.center_x
+        y = self.center_y
+        if not self.pressed:
+            x -= self.button_height
+            y += self.button_height
+
+        arcade.draw_text(self.text, x, y,
+                         arcade.color.BLACK, font_size=self.font_size,
+                         width=self.width, align="center",
+                         anchor_x="center", anchor_y="center")
+
+    def on_press(self):
+        self.pressed = True
+
+    def on_release(self):
+        self.pressed = False
+
+
+class StartTextButton(TextButton):
+    def __init__(self, center_x, center_y, action_function):
+        super().__init__(center_x, center_y, 100, 40, "Start", 18, "Arial")
+        self.action_function = action_function
+
+    def on_release(self):
+        super().on_release()
+        self.action_function()
+
+
+class StopTextButton(TextButton):
+    def __init__(self, center_x, center_y, action_function):
+        super().__init__(center_x, center_y, 100, 40, "Stop", 18, "Arial")
+        self.action_function = action_function
+
+    def on_release(self):
+        super().on_release()
+        self.action_function()
+
+
+class DifficultyMenu(arcade.Window):
+    """ Main application class. """
+
+    def __init__(self, width, height, title):
+        """ Set up the application. """
+
+        super().__init__(width, height, title)
+
+        arcade.set_background_color(arcade.color.WHITE)
+
+        self.board = None
+        self.frame_count = 0
+        self.game_over = False
+        self.paused = False
+        self.board_sprite_list = None
+
+    def setup(self):
+        #time.sleep(5)
+        pass
+
 texture_list = create_textures()
 
 def main():
-    """ Create the game window, setup, run """
-    my_game = MyGame(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
+    my_difficulty_menu = DifficultyMenu(256, 256, "Select Difficulty")
+    my_difficulty_menu.setup()
+
+    my_game = SeanTetris(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
     my_game.setup()
+
     print("Playing music.")
     music = arcade.sound.load_sound("music.wav")
     arcade.sound.play_sound(music)
+
     arcade.run()
 
 
 if __name__ == "__main__":
     main()
-
 
