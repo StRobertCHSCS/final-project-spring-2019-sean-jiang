@@ -250,6 +250,12 @@ class SeanTetris(arcade.Window):
         elif key == arcade.key.DOWN:
             self.drop()
 
+            music = 'uuu.wav'
+            play = arcade.load_sound(music)
+
+            if key > 0:
+                arcade.play_sound(play)
+
     def draw_grid(self, grid, offset_x, offset_y):
         """
         Draw the grid. Used to draw the falling stones. The board is drawn
