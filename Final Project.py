@@ -250,6 +250,8 @@ class SeanTetris(arcade.Window):
         elif key == arcade.key.DOWN:
             self.drop()
 
+        def on_key_press(self, key, modifiers):
+            # If the user hits  the space bar, play the sound that we loaded
             music = 'uuu.wav'
             play = arcade.load_sound(music)
 
