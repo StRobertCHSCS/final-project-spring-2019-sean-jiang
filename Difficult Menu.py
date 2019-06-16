@@ -1,8 +1,10 @@
 # Name: Sean Jiang
 # File: Difficulty Menu
-# Version: 3
+# Version: 4
 
 import arcade
+import os
+import sys
 
 ROW_COUNT = 16
 COLUMN_COUNT = 5
@@ -10,7 +12,6 @@ COLUMN_COUNT = 5
 SCREEN_WIDTH = 500
 SCREEN_HEIGHT = 400
 SCREEN_TITLE = "Difficulty Menu"
-
 
 
 class TextButton:
@@ -154,7 +155,7 @@ class DifficultyMenu(arcade.Window):
     def __init__(self, width, height, title):
         super().__init__(width, height, title)
 
-        arcade.set_background_color(arcade.color.ALLOY_ORANGE)
+        arcade.set_background_color(arcade.color.AMAZON)
 
         # If you have sprite lists, you should create them here,
         # and set them to None
@@ -171,19 +172,19 @@ class DifficultyMenu(arcade.Window):
         global COLUMN_COUNT, SELECTED_DIFFICULTY
         COLUMN_COUNT = 10
         SELECTED_DIFFICULTY = 1
-        exec(open("./sean_tetrix.py").read())
+        os.system("python3 sean_tetrix_easy.py")
 
     def choose_difficulty_mediocre(self):
         global COLUMN_COUNT, SELECTED_DIFFICULTY
         COLUMN_COUNT = 10
         SELECTED_DIFFICULTY = 2
-        exec(open("./sean_tetrix.py").read())
+        os.system("python3 sean_tetrix_mediocre.py")
 
     def choose_difficulty_hard(self):
         global COLUMN_COUNT, SELECTED_DIFFICULTY
         COLUMN_COUNT = 5
         SELECTED_DIFFICULTY = 3
-        exec(open("./sean_tetrix.py").read())
+        os.system("python3 sean_tetrix_hard.py")
 
 
     def setup(self):
@@ -252,10 +253,6 @@ class DifficultyMenu(arcade.Window):
         Called when a user releases a mouse button.
         """
         check_mouse_release_for_buttons(x, y, self.button_list)
-
-
-
-
 
 def main():
     """ Main method """
