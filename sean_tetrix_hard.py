@@ -39,9 +39,10 @@ SCREEN_WIDTH = (WIDTH + MARGIN) * COLUMN_COUNT + MARGIN
 SCREEN_HEIGHT = (HEIGHT + MARGIN) * ROW_COUNT + MARGIN
 SCREEN_TITLE = "Sean's Tetris 2019"
 
-colors = [(220, 220, 220), (0, 0, 0), (0, 150, 0), (220, 20, 60), (255, 69, 0),
-          (143, 188, 143), (210, 105, 30), (255, 0, 255), (255, 255, 0),
+colors = [(220, 220, 220), (255, 128, 170), (0, 150, 0), (220, 20, 60), (255, 69, 0),
+          (231, 144, 143), (210, 105, 30), (255, 0, 255), (0, 230, 230),
           (255, 218, 185), (75, 0, 130), (219, 112, 147), (188, 143, 143)]
+
 
 # Define the shapes of the single parts
 tetris_shapes = [
